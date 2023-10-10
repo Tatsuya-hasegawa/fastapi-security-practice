@@ -41,21 +41,20 @@ def get_db():
     finally:
         db.close()
 
-# DBからユーザー情報の取得
-def get_user(db, username: str):
-    user_obj = crud.get_user_by_username(db,username)
-    #if username in db:
-    #    user_dict = db[username]
-    #    return schemas.UserInDB(**user_dict)
+''' Practice 5: Step6 堅牢化 '''
+# DBからユーザー情報をemailで取得
+def get_user(db, email: str):
+    user_obj = crud.get_user_by_email(db,email)
     try:
         user_dict = user_obj.__dict__
         return schemas.UserInDB(**user_dict)
     except:
         return None
     
+
 # フォームで受け取ったユーザー名とパスワードをDBと照合して登録されているユーザーかどうかを認証する
-def authenticate_user(real_db, username: str, password: str):
-    user = get_user(real_db, username)
+def authenticate_user(real_db, email: str, password: str):
+    user = get_user(real_db, email)
     if not user:
         return False
     if not crud.verify_password(password, user.hashed_password):
@@ -82,13 +81,13 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
+        email: str = payload.get("sub")
+        if email is None:
             raise credentials_exception
-        token_data = schemas.TokenData(username=username)
+        token_data = schemas.TokenData(email=email)
     except JWTError:
         raise credentials_exception
-    user = get_user(db, username=token_data.username)
+    user = get_user(db, email=token_data.email)
     if user is None:
         raise credentials_exception
     return user
@@ -105,7 +104,7 @@ async def get_current_active_user(current_user: schemas.User = Depends(get_curre
 # パスオペレーションを定義
 async def root():
     # コンテンツの返信
-    return {"message": "Practice4:  IP Address attribute search with OAuth2 JWT and SQLite DB. In addition, registering and retrieving the IP search history"}
+    return {"message": "Practice5: [Secure Imprementation] IP Address attribute search with OAuth2 JWT and SQLite DB. In addition, registering and retrieving the IP search history"}
 
 
 ############ (1) IP種別チェック用 & (4) History登録 #############
@@ -122,16 +121,16 @@ def search_ip_and_regist_history(ipstr, current_user: schemas.User = Depends(get
 # ユーザー名とパスワードを入力してJWTトークンを取得するAPI認証パス
 @app.post("/token", response_model=schemas.Token)
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(),db: Session = Depends(get_db)): # asyncを外して、db: Session = Depends(get_db)を追加
-    user = authenticate_user(db, form_data.username, form_data.password)
+    user = authenticate_user(db, form_data.username, form_data.password) # ここはemailではなくusernameのまま。WebUIでの表示がusernameになっているがメールアドレスを入力して利用できる
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"sub": user.email}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -142,7 +141,7 @@ async def read_users_me(current_user: schemas.User = Depends(get_current_active_
 
 @app.get("/users/me/items/")
 async def read_own_items(current_user: schemas.User = Depends(get_current_active_user)):
-    return [{"item_id": "Congrats! Practice 4 has been finished !", "owner": current_user.username}]
+    return [{"item_id": "Congrats! Practice 5 has been finished! Good Job!", "owner": current_user.username}]
 
 ############ (3) DB操作用 #############
 # 以下では、DBの応答を待つ必要があるのでasyncをつけていない。また本演習はAsync SQLに対応させていない　参考　https://fastapi.tiangolo.com/ja/advanced/async-sql-databases/ https://fastapi.tiangolo.com/ja/async/#very-technical-details
@@ -153,31 +152,48 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email already registered")
     return crud.create_user(db=db, user=user)
 
+''' Practice 5: Step2 堅牢化 '''
 @app.get("/users/", response_model=List[schemas.User])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = crud.get_users(db, skip=skip, limit=limit)
-    return users
+def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_active_user)):
+    if current_user.id == 1: # id = 1がadministratorの場合
+        users = crud.get_users(db, skip=skip, limit=limit)
+        return users
+    else:
+        raise HTTPException(status_code=401, detail="Unauthrized Request: (Only Administrator can access to this API endpoint.)")        
 
+''' Practice 5: Step4 堅牢化 '''
 @app.get("/users/{user_id}", response_model=schemas.User)
-def read_user(user_id: int, db: Session = Depends(get_db)):
-    db_user = crud.get_user(db, user_id=user_id)
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return db_user
+def read_user(user_id: int, db: Session = Depends(get_db),current_user: schemas.User = Depends(get_current_active_user)):
+    if user_id == current_user.id:
+        db_user = crud.get_user(db, user_id=user_id)
+        if db_user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        return db_user
+    else:
+        raise HTTPException(status_code=401, detail="Unauthrized Request: (Trying Insecure Direct Object References)")      
 
+
+''' Practice 5: Step1 無効化
 @app.post("/users/{user_id}/items/", response_model=schemas.Item)
 def create_item_for_user(
     user_id: int, item: schemas.ItemCreate, db: Session = Depends(get_db)
 ):
     return crud.create_user_item(db=db, item=item, user_id=user_id)
+'''
 
+''' Practice 5: Step3 無効化 
 @app.get("/items/", response_model=List[schemas.Item])
 def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     items = crud.get_items(db, skip=skip, limit=limit)
     return items
+'''
 
 ############ (4) IPヒストリー取得用 #############
+''' Practice 5: Step5 堅牢化 '''
 @app.get("/history/", response_model=List[schemas.Item])
-def read_history(current_user: schemas.User = Depends(get_current_active_user), db: Session = Depends(get_db)):
-    history = crud.retrieve_user_history(db=db, user_id=current_user.id)
-    return history
+def read_history(current_user: schemas.User = Depends(get_current_active_user), db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+    history = crud.retrieve_user_history(db=db, user_id=current_user.id, skip=skip, limit=limit)
+    if limit > 100:
+        raise HTTPException(status_code=400, detail="Exceed the maximum limit !")    
+    else:
+        return history

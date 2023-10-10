@@ -59,5 +59,5 @@ def create_user_item(db: Session, item: dict, user_id: int): # itemの内容はP
 
 
 # [追加] ユーザーのIPサーチヒストリーの取得
-def retrieve_user_history(db: Session, user_id: int):
-    return db.query(models.Item).filter(models.Item.owner_id == user_id).all()
+def retrieve_user_history(db: Session, user_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.Item).filter(models.Item.owner_id == user_id).offset(skip).limit(limit).all()
