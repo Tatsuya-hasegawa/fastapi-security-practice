@@ -30,10 +30,10 @@ async def root():
 ```
 
 ### 確認
-@raw response http://127.0.0.1:8000/
-@OpenAPIドキュメント http://127.0.0.1:8000/docs
-@ReDocドキュメント http://127.0.0.1:8000/redoc
-@APIスキーマ　http://127.0.0.1:8000/openapi.json
+* @raw response http://127.0.0.1:8000/
+* @OpenAPIドキュメント http://127.0.0.1:8000/docs
+* @ReDocドキュメント http://127.0.0.1:8000/redoc
+* @APIスキーマ　http://127.0.0.1:8000/openapi.json
 
 
 
@@ -102,10 +102,13 @@ def fetch_ipattr(ipstr):
 ```
 
 関連ライブラリファイルがカレントディレクトリにあり、main.pyのみpractice1/のものを使う場合
-(fastapienv) % uvicorn practice1.main:app --reload
+
+- (fastapienv) % uvicorn practice1.main:app --reload
+
 もしくは
-(fastapienv)  % cd practice1
-(fastapienv) % uvicorn main:app --reload
+
+- (fastapienv) % cd practice1
+- (fastapienv) % uvicorn main:app --reload
 
 
 
@@ -116,28 +119,34 @@ https://fastapi.tiangolo.com/ja/tutorial/security/oauth2-jwt/
 OAuth2が ユーザー名 や パスワード を送信するために、「フォームデータ」を扱うため追加インストール
 $ pip install python-multipart
 > Successfully installed python-multipart-0.0.5 six-1.16.0
+(手元のバージョンど微妙に違っても気にしないでください)
 
 JWTトークンの生成と検証を行うため
 $ pip install python-jose
 > Successfully installed ecdsa-0.18.0 pyasn1-0.4.8 python-jose-3.3.0 rsa-4.9
+(手元のバージョンど微妙に違っても気にしないでください)
 
 Bcryptアルゴリズムによるパスワードのハッシュ化のため
 $ pip install passlib[bcrypt]
 > Successfully installed passlib-1.7.4 bcrypt-4.0.1
+(手元のバージョンど微妙に違っても気にしないでください)
 
 関連ライブラリファイルがカレントディレクトリにあり、main.pyのみpractice2/のものを使う場合
-(fastapienv) % uvicorn practice2.main:app --reload
+
+- (fastapienv) % uvicorn practice2.main:app --reload
+
 または
-(fastapienv)  % cd practice2
-(fastapienv) % uvicorn main:app --reload
+
+- (fastapienv) % cd practice2
+- (fastapienv) % uvicorn main:app --reload
 
 practice2/
-main.py
-myownlib.py
+- main.py
+- myownlib.py
 
 補足：仮DBのクレデンシャル
-Username: johndoe 
-Password: secret
+> Username: johndoe 
+> Password: secret
 
 
 
@@ -147,25 +156,28 @@ https://fastapi.tiangolo.com/ja/tutorial/sql-databases/
 SQL操作ライブラリをインストール
 $ pip install sqlalchemy
 >Successfully installed greenlet-2.0.1 sqlalchemy-1.4.44
+(手元のバージョンど微妙に違っても気にしないでください)
 
 今回は簡易版として同じフォルダにSQLiteDBファイルで保存します
 
 practice3/
-__init__.py
-crud.py
-database.py
-main.py
-models.py
-myownlib.py
-schemas.py
+- __init__.py
+- crud.py
+- database.py
+- main.py
+- models.py
+- myownlib.py
+- schemas.py
 
 テストデータ
+```
 {
   "email": "johndoe@example.com",
   "password": "secret",
   "username": "johndoe",
   "full_name": "John Doe"
 }
+```
 
 **修正方針**
 1. (2)作成の認証付きのアプリケーションにチュートリアルのsql-databasesテンプレートコードらをコピー追加し、main.pyのDB操作用のAPIエンドポイントを一つ一つ動作確認しながら修正する
@@ -189,10 +201,13 @@ schemas.py
 
 
 関連ライブラリファイルがカレントディレクトリにあり、main.pyのみpractice3/のものを使う場合
-(fastapienv) % uvicorn practice3.main:app --reload
+
+- (fastapienv) % uvicorn practice3.main:app --reload
+
 または
-(fastapienv) % cd practice3
-(fastapienv) % uvicorn main:app --reload
+
+- (fastapienv) % cd practice3
+- (fastapienv) % uvicorn main:app --reload
 
 
 
@@ -201,13 +216,13 @@ schemas.py
 スキーマの変更が必要になるため、./sql_app.dbを一度削除してください。本日の演習ではその後もスキーマを変更するたびに削除した方が良いです。
 
 practice4/
-__init__.py
-crud.py
-database.py
-main.py
-models.py
-myownlib.py
-schemas.py
+- __init__.py
+- crud.py
+- database.py
+- main.py
+- models.py
+- myownlib.py
+- schemas.py
 
 **修正方針**
 1. (3)で作成したmain.pyをベースに修正する
@@ -236,11 +251,13 @@ def retrieve_user_history(db: Session, user_id: int):
     return db.query(models.Item).filter(models.Item.owner_id == user_id).all()
 
 関連ライブラリファイルがカレントディレクトリにあり、main.pyのみpractice4/のものを使う場合
-(fastapienv) % uvicorn practice4.main:app --reload
-または
-(fastapienv) % cd practice4
-(fastapienv) % uvicorn main:app --reload
 
+- (fastapienv) % uvicorn practice4.main:app --reload
+
+または
+
+- (fastapienv) % cd practice4
+- (fastapienv) % uvicorn main:app --reload
 
 
 
@@ -342,7 +359,7 @@ Optional Step:
     API10:2019 ロギングが十分に取られていない不備もあります
     ロギングはuvicornが記録するアクセスログをダンプするほかにMiddlewareやAPIRouterの機能でカスタム実装できます
     参考：https://blog.jicoman.info/2021/01/how-to-logging-request-and-response-body-by-fastapi/
-    しかし2023年版のAPI8:2023では、不要なロギングやエラーメッセージは出力しないほうがよいという意見もあります。
+    しかし2023年版のAPI8:2023では、不要なロギングやエラーメッセージは出力しないほうがよいという意見もある。
 
     正直、この演習用APIサーバーに対する脆弱性や不備は他にももっと他にもあるはずです・・・
     JWTによる認証部分など https://www.rfc-editor.org/rfc/rfc8725.html
@@ -351,10 +368,14 @@ Optional Step:
     ```
 
 関連ライブラリファイルがカレントディレクトリにあり、main.pyのみpractice5/のものを使う場合
-(fastapienv)  % uvicorn practice5.main:app --reload
+
+- (fastapienv)  % uvicorn practice5.main:app --reload
+
 または
-(fastapienv)  % cd practice5
-(fastapienv)  % uvicorn main:app --reload
+
+- (fastapienv)  % cd practice5
+- (fastapienv)  % uvicorn main:app --reload
+
 
 **注意：Practice5の解答コードではAuthrizeのusernameにはemailを入力すること**
 Happy API Security :) !
