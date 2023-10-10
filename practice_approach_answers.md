@@ -1,59 +1,13 @@
+# 解答アプローチ
 
-## 環境インストール
+## はじめに
 
-Python3.7以上において新規仮想Python環境を構築
+本演習におけるFastAPIとUvicornの検証バージョンは以下です。
 
-venv例: 
-$ python3 -V
-> Python 3.8.8 (長谷川環境バージョン)
-$ mkdir fastapienv
-$ python3 -m venv fastapienv 
-$ source fastapienv/bin/activate
+- fastapi: 0.103.2
+- uvicorn: 0.23.2 
 
-conda例
-conda create --name fastapienv python=3.8.8
-[global]
-trusted-host = pypi.python.org
-               pypi.org
-               files.pythonhosted.org
-のpip.iniをC:\Users\<Your Name>\mambaforge\envs\fastapienvに配置
-conda activate fastapienv
-
-FastAPIをインストールする
-(fastapienv) $ pip install fastapi
->Successfully installed fastapi-0.87.0 pydantic-1.10.2 starlette-0.21.0
-
-Uvicornをインストールする
-$ pip install "uvicorn[standard]"
->Successfully installed click-8.1.3 colorama-0.4.6 httptools-0.5.0 python-dotenv-0.21.0 uvicorn-0.20.0 watchfiles-0.18.1 websockets-10.4
-
-(Optional) VSCodeでデバッグする場合
-- コマンドパレットから、Python Select Interpreter にて実行環境をfastapienvに指定する
-- Debug環境をfastapi(uvicorn)にする
-(Optional) ホットリロード設定に変更する場合
-- launch.jsonのargsに "--reload"
-{
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Python: FastAPI",
-            "type": "python",
-            "request": "launch",
-            "module": "uvicorn",
-            "args": [
-                "main:app",
-                "--reload" #この行を追加！
-            ],
-            "jinja": true
-        }
-    ]
-}
-
-## 解答例のソースコード置き場
-`practice_answers_sourcecode.zipにpracticeNのフォルダごとにあります。`
+practiceNのブランチごとに解答例のソースコードがあります。
 practice0、practice1については下記にも転記しています。
 
 ## (0) Hello World ! 
@@ -80,6 +34,7 @@ async def root():
 @OpenAPIドキュメント http://127.0.0.1:8000/docs
 @ReDocドキュメント http://127.0.0.1:8000/redoc
 @APIスキーマ　http://127.0.0.1:8000/openapi.json
+
 
 
 ## (1) IPアドレスの種別を返答するAPIサービス
@@ -152,6 +107,8 @@ def fetch_ipattr(ipstr):
 (fastapienv)  % cd practice1
 (fastapienv) % uvicorn main:app --reload
 
+
+
 ## (2) OAuth2を用いたユーザー認証
 https://fastapi.tiangolo.com/ja/tutorial/security/first-steps/
 https://fastapi.tiangolo.com/ja/tutorial/security/oauth2-jwt/
@@ -178,8 +135,10 @@ practice2/
 main.py
 myownlib.py
 
-仮DBのクレデンシャル
-Username: johndoe Password: secret
+補足：仮DBのクレデンシャル
+Username: johndoe 
+Password: secret
+
 
 
 ## (3) DBを利用したユーザー登録とOAuth2を用いたユーザー認証
@@ -228,14 +187,17 @@ schemas.py
 
 5. JWTトークンでの認証がうまくいくかを `@app.post("/users/", response_model=schemas.User)　および　@app.get("/ipaddr/{ipstr}")`にて確認
 
+
 関連ライブラリファイルがカレントディレクトリにあり、main.pyのみpractice3/のものを使う場合
 (fastapienv) % uvicorn practice3.main:app --reload
 または
-(fastapienv)  % cd practice3
+(fastapienv) % cd practice3
 (fastapienv) % uvicorn main:app --reload
 
 
+
 ## (4) ユーザーの入力したIPアドレスのヒストリを登録し、それを返答するAPIサービス
+
 スキーマの変更が必要になるため、./sql_app.dbを一度削除してください。本日の演習ではその後もスキーマを変更するたびに削除した方が良いです。
 
 practice4/
@@ -279,6 +241,9 @@ def retrieve_user_history(db: Session, user_id: int):
 (fastapienv) % cd practice4
 (fastapienv) % uvicorn main:app --reload
 
+
+
+
 ## (5) To be secure: 堅牢化への取り組み
 
 Practice 4の長谷川の完成版を題材に、API堅牢化ポイントを発見し、堅牢化を実装してください。
@@ -286,14 +251,17 @@ Practice 4の長谷川の完成版を題材に、API堅牢化ポイントを発�
 Step 1: 
     実装上の不備がありエラーになるAPIエンドポイントが存在します。探してそのAPIエンドポイントを無効化してください。
 
+    ```
     (不幸中の幸い！これができると他のユーザーのアイテムへの書き込みができることになってました)
     理由：itemをdictに変更したのでエラーになる　@app.post("/users/{user_id}/items/", response_model=schemas.Item)
     db_item = models.Item(owner_id=user_id, ipaddress=item.get("ipstr"), ip_attr=item.get("ip_attr")) # **item.dict(), を削除
         AttributeError: 'ItemCreate' object has no attribute 'get'
+    ```
 
 Step 2:
     /users/のAPIエンドポイントには実装上の不備があります。有効化したまま堅牢化してください。
 
+    ```
     方針例：認証と認可の追加(管理者アカウントのみ認証後に閲覧可能とする認可を与える) 
     
     不備 API2:2023 Broken Authentication 認証が弱いまたはついていない。
@@ -304,35 +272,45 @@ Step 2:
     + 認可で管理者ユーザーからしかアクセスできないようにする
     + 簡単な暫定案の一例: user_id = 1の一番最初に登録したユーザーをadminにすることを実装した
     [!] ベストはDBの列に管理者フラグをつけて管理し、ソースコードから管理者が特定されないようにすること
+    ```
+
 
 Step 3:
     /items/のAPIエンドポイントには実装上の不備があります。全体最適化により堅牢化してください。
 
+    ```
     /items/のAPIエンドポイントに認証と認可の追加が基本。(API1,API2,API5)
     全ユーザーのitemsリストは/users/にも含まれており、
     ログインユーザーのitemsリストは/history/と実装が被っているので、ここでは/items/のAPIエンドポイントを"無効化"するのが理想と考えます。
+    ```
+
 
 Step 4:
     /users/{userid}のAPIエンドポイントには実装上の不備があります。全体最適化により堅牢化してください。
 
+    ```
     不備 API1:2023 BOLA -> userBの認可情報でuserAの情報が閲覧できてしまう問題がある。ログインユーザーが自分のIDの情報しか見えないようにする。
     不備 API2:2023 Broken Authentication -> 認証が弱いまたはついていない。認証で登録ユーザーのみからしかアクセスできないようにする
     の二つを実装。
     もしくは、/users/meと同じになるので"無効化"でも良いが、/users/meにはitemsが載ってきていないので無効化する場合はitemsフィールドをRDBからget_userで取得する必要がある
+    ```
 
 Step 5:
     /history/のAPIエンドポイントには設計上の弱点があります。有効化したまま堅牢化してください。
 
+    ```
     弱点 API4:2023 Unrestricted Resource Comsumption -> Listで返すときは上限を設定しバッファオーバーフローを防ぐ　def retrieve_user_history(db: Session, user_id: int, skip: int = 0, limit: int = 100):
     if limit > 100:
         raise HTTPException(status_code=400, detail="Exceed the maximum limit !")    
 
     一般的には、検索フィルターを実装したり、ページングでデータを連続的に処理しますが、本解説ではそこまで実装していません。
     別案：IPアドレスでのAPIエンドポイントへのクエリ回数の制限など
+    ```
 
 Step 6:
     現在の認証フォームには実装上の弱点があります。弱点を探し、堅牢化してください。
 
+    ```
     弱点 API2:2023 Broken Authentication -> UserDBのユニークキーが emailにもかからわずusernameとパスワードでのログインになっている
     現時点では異なるメールアドレスで同じユーザー名を利用できてしまい、パスワードも同じである場合に意図しない別のユーザーの情報を表示できてしまう可能性がある。
     修正案1. usernameとパスワードでのログインから、emailとパスワードでのログインに変更する。
@@ -348,6 +326,7 @@ Step 6:
     schemas.py
     class TokenData(BaseModel):
         email: Union[str, None] = None
+    ```
 
 Optional Step:
     あと少なくとも１ヶ所に実装上の弱点があります。それはどこでしょうか？
@@ -366,6 +345,9 @@ Optional Step:
     しかし2023年版のAPI8:2023では、不要なロギングやエラーメッセージは出力しないほうがよいという意見もあります。
 
     正直、この演習用APIサーバーに対する脆弱性や不備は他にももっと他にもあるはずです・・・
+    JWTによる認証部分など https://www.rfc-editor.org/rfc/rfc8725.html
+
+
     ```
 
 関連ライブラリファイルがカレントディレクトリにあり、main.pyのみpractice5/のものを使う場合
@@ -376,6 +358,7 @@ Optional Step:
 
 **注意：Practice5の解答コードではAuthrizeのusernameにはemailを入力すること**
 Happy API Security :) !
+
 
 ## Appendix
 
@@ -393,6 +376,7 @@ Happy API Security :) !
   "username": "test",
   "full_name": "Test User"
 }
+
 
 以上です。
 お疲れさまでした。
