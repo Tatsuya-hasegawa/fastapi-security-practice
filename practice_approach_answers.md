@@ -13,7 +13,7 @@ practice0、practice1については下記にも転記しています。
 ## (0) Hello World ! 
 
 main.py
-```
+```python
 # FastAPIをインポート
 from fastapi import FastAPI
 
@@ -41,7 +41,7 @@ async def root():
 
 `ソースコード`
 main.py
-```
+```python
 # FastAPIをインポート
 from fastapi import FastAPI
 # 自分で作成したカスタムライブラリから必要な関数をインポート
@@ -65,7 +65,7 @@ async def read_item(ipstr):
 ```
 
 myownlib.py
-```
+```python
 # ipaddressモジュールからip_address関数をインポート　https://docs.python.org/ja/3.10/library/ipaddress.html
 from ipaddress import ip_address
 
@@ -362,15 +362,17 @@ Happy API Security :) !
 
 ## Appendix
 
-テストデータ
-{
+（practive3にて作成する）テストアカウントのサンプル
+
+>{
   "email": "johndoe@example.com",
   "password": "secret",
   "username": "johndoe",
   "full_name": "John Doe"
 }
 
-{
+
+>{
   "email": "test@example.com",
   "password": "test",
   "username": "test",
