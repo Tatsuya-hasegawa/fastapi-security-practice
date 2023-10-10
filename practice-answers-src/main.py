@@ -44,15 +44,15 @@ def get_db():
 # DBからユーザー情報の取得
 def get_user(db, username: str):
     user_obj = crud.get_user_by_username(db,username)
-    try:
-        user_dict = user_obj.__dict__
-    except:
-        user_dict = None
     #if username in db:
     #    user_dict = db[username]
     #    return schemas.UserInDB(**user_dict)
-    return schemas.UserInDB(**user_dict)
-
+    try:
+        user_dict = user_obj.__dict__
+        return schemas.UserInDB(**user_dict)
+    except:
+        return None
+    
 # フォームで受け取ったユーザー名とパスワードをDBと照合して登録されているユーザーかどうかを認証する
 def authenticate_user(real_db, username: str, password: str):
     user = get_user(real_db, username)
@@ -105,14 +105,18 @@ async def get_current_active_user(current_user: schemas.User = Depends(get_curre
 # パスオペレーションを定義
 async def root():
     # コンテンツの返信
-    return {"message": "Practice3:  IP Address attribute search with OAuth2 JWT and SQLite DB."}
+    return {"message": "Practice4:  IP Address attribute search with OAuth2 JWT and SQLite DB. In addition, registering and retrieving the IP search history"}
 
-############ (1) IP種別チェック用 #############
+
+############ (1) IP種別チェック用 & (4) History登録 #############
 # IPアドレスの種別を取得するAPIパス
 @app.get("/ipaddr/{ipstr}")
-def read_item(ipstr,current_user: schemas.User = Depends(get_current_active_user)):   # asyncを外した
+def search_ip_and_regist_history(ipstr, current_user: schemas.User = Depends(get_current_active_user), db: Session = Depends(get_db)):   # 関数名をread_itemから変更 
     ip_attr = fetch_ipattr(ipstr)
+    result_item = crud.create_user_item(db=db, item={"ipstr":ipstr,"ip_attr":ip_attr}, user_id=current_user.id)
+    print(result_item)
     return {"ipaddr": ipstr, "attr":ip_attr, "owner": current_user.username } 
+
 
 ############## (2) 認証用 #################
 # ユーザー名とパスワードを入力してJWTトークンを取得するAPI認証パス
@@ -138,7 +142,7 @@ async def read_users_me(current_user: schemas.User = Depends(get_current_active_
 
 @app.get("/users/me/items/")
 async def read_own_items(current_user: schemas.User = Depends(get_current_active_user)):
-    return [{"item_id": "Congrats! Practice 3 has been finished!", "owner": current_user.username}]
+    return [{"item_id": "Congrats! Practice 4 has been finished !", "owner": current_user.username}]
 
 ############ (3) DB操作用 #############
 # 以下では、DBの応答を待つ必要があるのでasyncをつけていない。また本演習はAsync SQLに対応させていない　参考　https://fastapi.tiangolo.com/ja/advanced/async-sql-databases/ https://fastapi.tiangolo.com/ja/async/#very-technical-details
@@ -150,7 +154,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return crud.create_user(db=db, user=user)
 
 @app.get("/users/", response_model=List[schemas.User])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)): # 認証付きにするには　current_user: schemas.User = Depends(get_current_active_user)
+def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     users = crud.get_users(db, skip=skip, limit=limit)
     return users
 
@@ -172,6 +176,8 @@ def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     items = crud.get_items(db, skip=skip, limit=limit)
     return items
 
-
-
-
+############ (4) IPヒストリー取得用 #############
+@app.get("/history/", response_model=List[schemas.Item])
+def read_history(current_user: schemas.User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    history = crud.retrieve_user_history(db=db, user_id=current_user.id)
+    return history

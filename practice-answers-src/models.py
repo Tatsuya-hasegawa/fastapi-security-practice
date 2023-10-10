@@ -30,8 +30,10 @@ class Item(Base):
 
     # 列カラムの定義
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, index=True)
-    description = Column(String, index=True)
+    #title = Column(String, index=True)
+    #description = Column(String, index=True)
+    ipaddress = Column(String, index=True)
+    ip_attr = Column(String)
     owner_id = Column(Integer, ForeignKey("users.id"))
 
     # リレーションシップの定義（Userクラスとitemsの列で連結）

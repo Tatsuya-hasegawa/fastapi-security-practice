@@ -50,10 +50,14 @@ def get_items(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Item).offset(skip).limit(limit).all()
 
 #　ユーザーのアイテム作成
-def create_user_item(db: Session, item: schemas.ItemCreate, user_id: int):
-    db_item = models.Item(**item.dict(), owner_id=user_id)
+def create_user_item(db: Session, item: dict, user_id: int): # itemの内容はPOSTデータではなく、ip search のAPIパスの結果からdictで受けとる
+    db_item = models.Item(owner_id=user_id, ipaddress=item.get("ipstr"), ip_attr=item.get("ip_attr")) # **item.dict(), を削除
     db.add(db_item)
     db.commit()
     db.refresh(db_item)
     return db_item
 
+
+# [追加] ユーザーのIPサーチヒストリーの取得
+def retrieve_user_history(db: Session, user_id: int):
+    return db.query(models.Item).filter(models.Item.owner_id == user_id).all()

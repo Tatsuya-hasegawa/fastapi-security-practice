@@ -10,9 +10,12 @@ from pydantic import BaseModel
 
 class ItemBase(BaseModel):
     # 型の宣言
-    title: str
-    description: Union[str, None] = None
+    ipaddress: str
+    ip_attr: str
+    #title: str
+    #description: Union[str, None] = None
 
+# [Optional] Itemスキーマについては、APIのPOSTで受け取らない仕様のため、実際は使わないが、練習がてら定義します。
 class ItemCreate(ItemBase):
     pass
 
@@ -21,6 +24,8 @@ class Item(ItemBase):
     # 型の宣言
     id: int
     owner_id: int
+    ipaddress: str
+    ip_attr: Union[str, None] = None
 
     class Config:
         # 値の代入
