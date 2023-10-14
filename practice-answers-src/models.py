@@ -21,7 +21,7 @@ class User(Base):
     disabled = Column(Boolean, default=False)
     #is_active = Column(Boolean, default=True)
 
-    # リレーションシップの定義（Itemクラスとownerの列で連結）
+    # リレーションシップの定義（Itemクラスのownerとリレーション）
     items = relationship("Item", back_populates="owner")
 
 # itemsテーブルの定義
@@ -34,7 +34,9 @@ class Item(Base):
     #description = Column(String, index=True)
     ipaddress = Column(String, index=True)
     ip_attr = Column(String)
+    # Userクラスのidをowner_idに代入
     owner_id = Column(Integer, ForeignKey("users.id"))
 
-    # リレーションシップの定義（Userクラスとitemsの列で連結）
+    # リレーションシップの定義（Userクラスのitemsとリレーション）
     owner = relationship("User", back_populates="items")
+    
