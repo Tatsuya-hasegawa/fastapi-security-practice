@@ -116,23 +116,20 @@ def fetch_ipattr(ipstr):
 https://fastapi.tiangolo.com/ja/tutorial/security/first-steps/
 https://fastapi.tiangolo.com/ja/tutorial/security/oauth2-jwt/
 
+OAuth2が ユーザー名 や パスワード を送信するために、「フォームデータ」を扱うため追加インストール
+$ pip install python-multipart
+> Successfully installed six-1.16.0 python-multipart-0.0.6
+(手元のバージョンど微妙に違っても気にしないでください)
 
 JWTトークンの生成と検証を行うため
 $ pip install python-jose[cryptography]
-> Successfully installed ecdsa-0.18.0 pyasn1-0.4.8 python-jose-3.3.0 rsa-4.9
+> Successfully installed cffi-1.16.0 cryptography-41.0.4 ecdsa-0.18.0 pyasn1-0.5.0 pycparser-2.21 python-jose-3.3.0 rsa-4.9
 (手元のバージョンど微妙に違っても気にしないでください)
 
 Bcryptアルゴリズムによるパスワードのハッシュ化のため
 $ pip install passlib[bcrypt]
-> Successfully installed passlib-1.7.4 bcrypt-4.0.1
+> Successfully installed bcrypt-4.0.1 passlib-1.7.4
 (手元のバージョンど微妙に違っても気にしないでください)
-
-> python-multipart は、必須ではなくなりました　↓
->
->OAuth2が ユーザー名 や パスワード を送信するために、「フォームデータ」を扱うため追加インストール
->$ pip install python-multipart
->> Successfully installed python-multipart-0.0.5 six-1.16.0
->(手元のバージョンど微妙に違っても気にしないでください)
 
 
 関連ライブラリファイルがカレントディレクトリにあり、main.pyのみpractice2/のものを使う場合
@@ -159,7 +156,7 @@ https://fastapi.tiangolo.com/ja/tutorial/sql-databases/
 
 SQL操作ライブラリをインストール
 $ pip install sqlalchemy
->Successfully installed greenlet-2.0.1 sqlalchemy-1.4.44
+>Successfully installed greenlet-3.0.0 sqlalchemy-2.0.22
 (手元のバージョンど微妙に違っても気にしないでください)
 
 今回は簡易版として同じフォルダにSQLiteDBファイルで保存します
