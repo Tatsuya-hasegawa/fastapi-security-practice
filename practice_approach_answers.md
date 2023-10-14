@@ -116,13 +116,9 @@ def fetch_ipattr(ipstr):
 https://fastapi.tiangolo.com/ja/tutorial/security/first-steps/
 https://fastapi.tiangolo.com/ja/tutorial/security/oauth2-jwt/
 
-OAuth2が ユーザー名 や パスワード を送信するために、「フォームデータ」を扱うため追加インストール
-$ pip install python-multipart
-> Successfully installed python-multipart-0.0.5 six-1.16.0
-(手元のバージョンど微妙に違っても気にしないでください)
 
 JWTトークンの生成と検証を行うため
-$ pip install python-jose
+$ pip install python-jose[cryptography]
 > Successfully installed ecdsa-0.18.0 pyasn1-0.4.8 python-jose-3.3.0 rsa-4.9
 (手元のバージョンど微妙に違っても気にしないでください)
 
@@ -130,6 +126,14 @@ Bcryptアルゴリズムによるパスワードのハッシュ化のため
 $ pip install passlib[bcrypt]
 > Successfully installed passlib-1.7.4 bcrypt-4.0.1
 (手元のバージョンど微妙に違っても気にしないでください)
+
+> python-multipart は、必須ではなくなりました　↓
+>
+>OAuth2が ユーザー名 や パスワード を送信するために、「フォームデータ」を扱うため追加インストール
+>$ pip install python-multipart
+>> Successfully installed python-multipart-0.0.5 six-1.16.0
+>(手元のバージョンど微妙に違っても気にしないでください)
+
 
 関連ライブラリファイルがカレントディレクトリにあり、main.pyのみpractice2/のものを使う場合
 
@@ -309,7 +313,7 @@ Step 4:
     不備 API1:2023 BOLA -> userBの認可情報でuserAの情報が閲覧できてしまう問題がある。ログインユーザーが自分のIDの情報しか見えないようにする。
     不備 API2:2023 Broken Authentication -> 認証が弱いまたはついていない。認証で登録ユーザーのみからしかアクセスできないようにする
     の二つを実装。
-    もしくは、/users/meと同じになるので"無効化"でも良いが、/users/meにはitemsが載ってきていないので無効化する場合はitemsフィールドをRDBからget_userで取得する必要がある
+    もしくは、/users/meと同じになるので"無効化"でも良いが、/users/meにはitemsが載ってきていないので、こちらを無効化する場合はitemsフィールドをDBからget_userで取得する必要がある
     ```
 
 Step 5:
@@ -349,21 +353,36 @@ Optional Step:
     あと少なくとも１ヶ所に実装上の弱点があります。それはどこでしょうか？
 
     ```
-    ソースコードへの秘密鍵のハードコーディング。GitHubなどで秘密鍵が漏洩し、かつMITMやSniffingで盗聴されたときにJWTトークンからユーザー名を復号できてしまう。
-        該当箇所　# openssl rand -hex 32 を実行して、JWTトークンの署名に使用されるランダムな秘密鍵を登録する
-        SECRET_KEY = "58c915fde18fbdd00c875f9edca8eec880504e745bcb6791921203c7dd56ebbc"
-        OSの環境変数やkeyringなどを利用してソースコード外に出すこと！
+    * 一例：ソースコードへの秘密鍵(SECRET_KEY)のハードコーディング。
+    　　　　　GitHubなどで秘密鍵(SECRET_KEY)が漏洩し、かつMITMや盗聴などでJWTトークンから暗号化アルゴリズムとユーザー名が取得できた場合、
+    　　　　　新たなJWTトークンを作り放題になる。
+     
+    　  該当箇所　
+            # openssl rand -hex 32 を実行して、JWTトークンの署名に使用されるランダムな秘密鍵を登録する
+            SECRET_KEY = "58c915fde18fbdd00c875f9edca8eec880504e745bcb6791921203c7dd56ebbc"
+        解決策
+            OSの環境変数やOSの資格情報管理ツールを利用してSECRET_KEYはソースコード外に出すこと！
 
-    API8:2023 Security misconfiguration -> HTTPSになっておらずTLS/SSL対応がなされていない
 
-    API10:2019 ロギングが十分に取られていない不備もあります
-    ロギングはuvicornが記録するアクセスログをダンプするほかにMiddlewareやAPIRouterの機能でカスタム実装できます
-    参考：https://blog.jicoman.info/2021/01/how-to-logging-request-and-response-body-by-fastapi/
-    しかし2023年版のAPI8:2023では、不要なロギングやエラーメッセージは出力しないほうがよいという意見もある。
+    * 一例: API8:2023 Security misconfiguration -> HTTPSになっておらず、TLS/SSL対応がなされていない。
+            fastapi httpsデプロイについて　https://fastapi.tiangolo.com/deployment/https/
+            演習の際にトラブルになりやすいので、実装しませんでした。
 
-    正直、この演習用APIサーバーに対する脆弱性や不備は他にももっと他にもあるはずです・・・
-    JWTによる認証部分など https://www.rfc-editor.org/rfc/rfc8725.html
 
+    * 一例: API10:2019 ロギングが十分に取られていない（送信元IPアドレスやAPIキーのuuid、ユーザー名など）。
+            アクセスログがないと利用ユーザーごとにRateLimitを設定しづらいこともある
+        
+        解決策:
+            ロギングはuvicornが記録するアクセスログをダンプするほかにMiddlewareやAPIRouterの機能でカスタム実装できます
+             参考：https://blog.jicoman.info/2021/01/how-to-logging-request-and-response-body-by-fastapi/
+        注意：
+            しかし2023年版のAPI8:2023では、不要なロギングやエラーメッセージは出力しないほうがよいという意見もあるため優先度はそこまで高くない。
+
+    さらには、この演習用APIサーバーに対する脆弱性や不備は他にももっと他にもあるはずです・・・
+    JWTによる認証/認可の部分などはデフォルトで設定しています。
+    参考: JSON Web Token Best Current Practices https://www.rfc-editor.org/rfc/rfc8725.html
+
+    みなさんでさらなる欠陥をどんどん発見し、堅牢化してみてください。
 
     ```
 
@@ -378,6 +397,7 @@ Optional Step:
 
 
 **注意：Practice5の解答コードではAuthrizeのusernameにはemailを入力すること**
+
 Happy API Security :) !
 
 
